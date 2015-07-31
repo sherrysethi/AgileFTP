@@ -1,5 +1,10 @@
 import java.io.IOException;
 import java.util.Scanner;
+import java.io.BufferedOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.File;
+import java.io.OutputStream;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 
@@ -10,6 +15,7 @@ public class FTPmain //main class for FTP Client
 	private static String Password = "test";
 	public static FTPClient client; //client is an object of type FTPClient
 	public static String displaystring = "ftp>>";
+	static FTPFile[] files;
 	public static void main(String[] args) 
 	{
 		client = new FTPClient(); //initialize client
@@ -17,7 +23,9 @@ public class FTPmain //main class for FTP Client
 	    FTPmain.ftplooper();
 	}
 	
-	public static void ftplooper()
+	
+	
+	public static void ftplooper()//looper function for implementing command line interface
 	{
 		while(true)
 	    {
@@ -35,20 +43,33 @@ public class FTPmain //main class for FTP Client
 	    		FTPmain.ftplistfiles();
 	    	}
 	    	
-	    	else if(inputCommand.equals("exit")) //log out from client
+	    	else if(inputCommand.equals("exit")) //exit the code. Automatically logs off client if logged in
 	    	{
 	    		break;
 	    	}
 	    	else if(inputCommand.equals("login"))
 	    	{
-	    		if(FTPmain.ftplogin()== false)
+	    		if(FTPmain.ftplogin()== false) //log into client
 	    		{
 	    			System.out.println("Error logging in. Please check entered details and try again.");
 	    		}
 	    	}
 	    	else if(inputCommand.equals("logout"))
 	    	{
-	    		FTPmain.ftplogout();
+	    		FTPmain.ftplogout(); //log out from client
+	    	}
+	    	else if(inputCommand.startsWith("get")) //for retrieving single file
+	    	{
+	    		try
+	    		{
+	    			String[] commands;
+	    			commands=inputCommand.split(" "); //split the command and filename
+	    			FTPmain.ftpgetfile(commands[1]); //invoke function with filename
+	    		}
+	    		catch(Exception e)
+	    		{
+	    			System.out.println("Usage: get <filename.filetype>"); //in case user doesn't enter filename
+	    		}
 	    	}
 	    	else if(inputCommand.equals(""))
 	    	{
@@ -60,7 +81,10 @@ public class FTPmain //main class for FTP Client
 	    }
 	}
 	
-	public static boolean ftplogout()
+	
+	
+	
+	public static boolean ftplogout()//function for logging out of the server
 	{
 		try
 		{
@@ -83,7 +107,7 @@ public class FTPmain //main class for FTP Client
 		}
 		return false;
 	}
-	public static boolean ftplogin()
+	public static boolean ftplogin()//function for logging in to the server
 	{
 		//get username from user
 	    System.out.println("Enter Username: ");
@@ -107,7 +131,7 @@ public class FTPmain //main class for FTP Client
 			if(client.login(UN, PW))
 			{
 				System.out.println("Successully logged in to " + serverAddStr);
-				displaystring = "ftp "+UN+"@"+serverAddStr+">>";
+				displaystring = "ftp "+UN+"@"+serverAddStr+">>"; //change display string
 				return(true);
 			}
 		}
@@ -118,23 +142,25 @@ public class FTPmain //main class for FTP Client
 		return false;
 	}
 	
-	public static void ftpdisplayhelp()
+	public static void ftpdisplayhelp()//function for displaying help message
 	{
 		//Display help messages
-		System.out.println("Welcome to the Dexters FTP Server!");
+		System.out.println("Welcome to the Dexters FTP Client!");
 		System.out.println("The following commands are available:");
 		System.out.println("1. ls: List all directories and files. Directories are marked with ~ and files are marked with *");
-		System.out.println("2. exit: Log out of the current session and exit the program.");
+		System.out.println("2. exit: Exit the program.");
 		System.out.println("3. help: Display this help message.");
 		System.out.println("4. login: Log in to remote server.");
+		System.out.println("5. logout: Log out of current session");
+		System.out.println("6. get <<filename>>: Retrieve a file from the server. File must be present at the server.");
 		System.out.println("End of help text");
 	}
 	
-	public static void ftplistfiles()
+	public static void ftplistfiles() //function for listing all files in the current server directory
 	{
 		try
 		{
-			FTPFile[] files = client.listFiles(); //get list of files from server and store it in array of type FTPFile
+			files = client.listFiles(); //get list of files from server and store it in array of type FTPFile
 			for(FTPFile file : files)//for each stored entry
 			{
 				if(file.isDirectory()) //check if the current entry is a directory
@@ -153,5 +179,28 @@ public class FTPmain //main class for FTP Client
 			System.out.println("ERROR. Not logged in!");
 		}
 		
+	}
+	public static boolean ftpgetfile(String filename) //function for retrieving single file from server
+	{
+		String currentDirectory;
+		currentDirectory = System.getProperty("user.dir"); //get the current directory
+		//System.out.println(currentDirectory);
+		File downloadedfile = new File(currentDirectory + "\\" + filename); //append a backslash to current directory while creating a new file
+		try
+		{
+			OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(downloadedfile)); //output stream for writing file
+			boolean success = client.retrieveFile(filename, outputStream); //retrieve file from server
+			outputStream.close(); //close the output stream
+			if (success) //if downloaded successfully
+			{
+				System.out.println("File has been downloaded successfully to " + currentDirectory + "\\" + filename);
+				return true;
+			}
+		}
+		catch(IOException e1)
+		{
+			System.out.println("Error. File not found.");
+		}
+		return false;
 	}
 }
