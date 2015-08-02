@@ -218,16 +218,16 @@ public class FTPmain //main class for FTP Client
 		return false;
 	}
 	
-    private static void getAllFiles(File curDir) {
-
+    private static  File[] getAllFiles(File curDir) 
+    {
         File[] filesList = curDir.listFiles();
         for(File f : filesList){
-            if(f.isDirectory())
-            	getAllFiles(f);
+        	if(f.isDirectory())
+                System.out.println(f.getName());
             if(f.isFile()){
                 System.out.println(f.getName());
             }
         }
-
+        return filesList;
     }
 }
