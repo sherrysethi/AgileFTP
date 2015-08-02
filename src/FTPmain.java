@@ -77,7 +77,14 @@ public class FTPmain //main class for FTP Client
 	    		File curDir = new File(".");
 	    		try
 	    		{
-	    			getAllFiles(curDir);
+	    			File[] listOfFiles = getAllFiles(curDir);
+	    			 for(File f : listOfFiles){
+	    		        	if(f.isDirectory())
+	    		                System.out.println(f.getName());
+	    		            if(f.isFile()){
+	    		                System.out.println(f.getName());
+	    		            }
+	    		        }
 	    		}
 	    		catch(Exception e)
 	    		{
@@ -221,13 +228,6 @@ public class FTPmain //main class for FTP Client
     private static  File[] getAllFiles(File curDir) 
     {
         File[] filesList = curDir.listFiles();
-        for(File f : filesList){
-        	if(f.isDirectory())
-                System.out.println(f.getName());
-            if(f.isFile()){
-                System.out.println(f.getName());
-            }
-        }
         return filesList;
     }
 }
