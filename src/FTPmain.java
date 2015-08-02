@@ -1,10 +1,14 @@
 import java.io.IOException;
 import java.util.Scanner;
 import java.io.BufferedOutputStream;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.File;
 import java.io.OutputStream;
+import java.io.InputStream;
+
+import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 
@@ -70,6 +74,19 @@ public class FTPmain //main class for FTP Client
 	    		catch(Exception e)
 	    		{
 	    			System.out.println("Usage: get <filename.filetype>"); //in case user doesn't enter filename
+	    		}
+	    	}
+	    	else if(inputCommand.startsWith("put")) //for retrieving single file
+	    	{
+	    		try
+	    		{
+	    			String[] commands;
+	    			commands=inputCommand.split(" "); //split the command and filename
+	    			FTPmain.ftpputfile(commands[1]); //invoke function with filename
+	    		}
+	    		catch(Exception e)
+	    		{
+	    			System.out.println("Usage: put <filename.filetype>"); //in case user doesn't enter filename
 	    		}
 	    	}
 	    	else if(inputCommand.equals("ll")) //for getting local files
@@ -229,5 +246,39 @@ public class FTPmain //main class for FTP Client
             }
         }
         return filesList;
+    }
+    
+    public static boolean ftpputfile(String filename)
+    {
+    	System.out.println("HERE!!!" + filename);
+    	File curDir = new File(".");
+    	File[] filesList;
+		try
+		{
+			filesList=getAllFiles(curDir);
+			for(File f:filesList)
+			{
+				//if(f.equals(filename))
+				if(f.getName().equals(filename))
+				{
+					boolean check;
+					InputStream input = new FileInputStream(new File(filename));
+					//ftp.storeFile(hostDir + fileName, input);
+					client.setFileType(FTP.BINARY_FILE_TYPE, FTP.BINARY_FILE_TYPE);
+			        client.setFileTransferMode(FTP.BINARY_FILE_TYPE);
+			        client.enterLocalPassiveMode();
+					//check=client.storeFile(curDir + "\\" + filename,input);
+					check=client.storeFile(curDir + "\\" + filename, input);
+					input.close();
+					System.out.println(check);
+					return true;
+				}
+			}
+		}
+		catch(Exception e)
+		{
+			System.out.println("Unable to upload file."); //to handle unexpected exceptions
+		}
+    	return false;
     }
 }
