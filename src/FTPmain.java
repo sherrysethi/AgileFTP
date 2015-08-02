@@ -16,6 +16,7 @@ public class FTPmain //main class for FTP Client
 	public static FTPClient client; //client is an object of type FTPClient
 	public static String displaystring = "ftp>>";
 	static FTPFile[] files;
+	
 	public static void main(String[] args) 
 	{
 		client = new FTPClient(); //initialize client
@@ -69,6 +70,18 @@ public class FTPmain //main class for FTP Client
 	    		catch(Exception e)
 	    		{
 	    			System.out.println("Usage: get <filename.filetype>"); //in case user doesn't enter filename
+	    		}
+	    	}
+	    	else if(inputCommand.equals("ll")) //for getting local files
+	    	{   
+	    		File curDir = new File(".");
+	    		try
+	    		{
+	    			getAllFiles(curDir);
+	    		}
+	    		catch(Exception e)
+	    		{
+	    			System.out.println("Usage: ll"); //to handle unexpected exceptions
 	    		}
 	    	}
 	    	else if(inputCommand.equals(""))
@@ -153,6 +166,7 @@ public class FTPmain //main class for FTP Client
 		System.out.println("4. login: Log in to remote server.");
 		System.out.println("5. logout: Log out of current session");
 		System.out.println("6. get <<filename>>: Retrieve a file from the server. File must be present at the server.");
+		System.out.println("7. ll: list local files");
 		System.out.println("End of help text");
 	}
 	
@@ -203,4 +217,17 @@ public class FTPmain //main class for FTP Client
 		}
 		return false;
 	}
+	
+    private static void getAllFiles(File curDir) {
+
+        File[] filesList = curDir.listFiles();
+        for(File f : filesList){
+            if(f.isDirectory())
+            	getAllFiles(f);
+            if(f.isFile()){
+                System.out.println(f.getName());
+            }
+        }
+
+    }
 }

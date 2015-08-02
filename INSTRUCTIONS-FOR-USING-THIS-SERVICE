@@ -1,0 +1,69 @@
+This service is managed by Information Services.  It holds information
+which may be useful to system managers and space is provided for
+individuals and groups upon request.  Upload facilities are also
+available.  Anyone can make use of this service. 
+
+The files called ls-lR and index are a list of all the files that are
+available from this server.  ls-lR.Z is a compressed version of this
+file.
+
+Files available on the archive are to be found in the 'pub' directory.
+
+Upload facilities for file sharing
+----------------------------------
+
+The directory 'incoming' is a place where files may be stored.  This
+directory is provided as a resource for communicating files between
+University of Edinburgh users and others; it is not a free Internet
+resource.  If you put files here then please send mail to the FTP server
+maintainer (ftpmaster@ed.ac.uk) explaining what should be done with
+them.  If notification is not received, the files will be removed.  This
+directory is not readable so once files are placed here you will not be
+able to see them.  You should also contact the person who you are
+passing the files to and provide them with the server name and names of
+all the files e.g.:
+
+		ftp://ftp.ed.ac.uk/incoming/myfile.txt
+
+To retrieve files, the exact filename and path should be used e.g.:
+
+		ftp://ftp.ed.ac.uk/incoming/myfile.txt
+
+The directory 'edupload' may be used by anyone connected to the
+University network to upload files in the same manner as above. 
+However, no mail notification needs to be sent to the FTP server
+maintainer and files will remain in the directory for one week.  Please
+do NOT upload files to both this and the incoming directory - choose one
+or the other. 
+
+Anyone may download files from /incoming or /edupload if they know the
+name of the file that is stored there. 
+
+How to upload a file to the server
+----------------------------------
+        
+It is best to use a command line ftp program.  Windows, Mac and Linux
+systems all provide a command line ftp client.  Open a command or
+terminal window and then type:
+
+        ftp ftp.ed.ac.uk
+
+Login using the username 'anonymous' and use your email address as password.
+
+Next change your current working directory to either the incoming
+directory or the edupload directory (be aware that edupload can only be
+accessed from the University network). 
+
+        cd /incoming
+
+Next upload your file(s) using the put command:
+
+        put myfile.txt
+
+Your file will then be loaded on the ftp server.  You will not be able
+to get a file listing of it though as the directory is protected. 
+
+
+FTP Server Maintainer (email: ftpmaster@ed.ac.uk)
+24th September 2010
+
