@@ -91,8 +91,23 @@ public class FTPmain //main class for FTP Client
 	    			System.out.println("Usage: ll"); //to handle unexpected exceptions
 	    		}
 	    	}
-	    	else if(inputCommand.equals(""))
+	    	else if(inputCommand.contains("cd"))
 	    	{
+	    		try
+	    		{
+	    			String[] dirName;
+	    			dirName = inputCommand.split(" ");
+	    			boolean success = client.changeWorkingDirectory(dirName[1]);
+	    			//showServerReply(client);
+	    			if (success) {
+	    	                System.out.println("Successfully changed working directory.");
+	    	            } else {
+	    	                System.out.println("Failed to change working directory.");
+	    	            }
+	    	 		}
+	    		catch(Exception e){
+	    				    			
+	    		}
 	    	}
 	    	else
 	    	{
