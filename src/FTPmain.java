@@ -1,18 +1,22 @@
+//To execute from command line:
+//javac -cp commons-net-3.3.jar FTPmain.java in both Windows and Linux
+//java -cp .;commons-net-3.3.jar FTPmain in Windows
+//java -cp .:commons-net-3.3.jar FTPmain in Linux
+
 import java.io.IOException;
 import java.util.Scanner;
 import java.io.BufferedOutputStream;
-import java.io.FileNotFoundException;
+import java.io.Console;
 import java.io.FileOutputStream;
 import java.io.File;
 import java.io.OutputStream;
+import java.io.InputStream;
+import java.io.FileInputStream;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 
 public class FTPmain //main class for FTP Client
 {
-
-	private static String Username = "test";
-	private static String Password = "test";
 	public static FTPClient client; //client is an object of type FTPClient
 	public static String displaystring = "ftp>>";
 	static FTPFile[] files;
@@ -78,35 +82,55 @@ public class FTPmain //main class for FTP Client
 	    		try
 	    		{
 	    			File[] listOfFiles = getAllFiles(curDir);
-	    			 for(File f : listOfFiles){
+	    			 for(File f : listOfFiles)
+	    			 {
 	    		        	if(f.isDirectory())
 	    		                System.out.println(f.getName());
-	    		            if(f.isFile()){
+	    		            if(f.isFile())
+	    		            {
 	    		                System.out.println(f.getName());
 	    		            }
-	    		        }
+	    		     }
 	    		}
 	    		catch(Exception e)
 	    		{
 	    			System.out.println("Usage: ll"); //to handle unexpected exceptions
 	    		}
 	    	}
-	    	else if(inputCommand.contains("cd"))
+	    	else if(inputCommand.contains("cd"))//to change current remote directory
 	    	{
 	    		try
 	    		{
 	    			String[] dirName;
-	    			dirName = inputCommand.split(" ");
+	    			dirName = inputCommand.split(" ");//split according to command and directory name
 	    			boolean success = client.changeWorkingDirectory(dirName[1]);
 	    			//showServerReply(client);
-	    			if (success) {
+	    			if (success) 
+	    			{
 	    	                System.out.println("Successfully changed working directory.");
-	    	            } else {
+	    	            
+	    			}
+	    			else 
+	    			{
 	    	                System.out.println("Failed to change working directory.");
-	    	            }
-	    	 		}
-	    		catch(Exception e){
-	    				    			
+	    	        }
+	    	 	}
+	    		catch(Exception e)
+	    		{
+	    			System.out.println("Exception in changing working directory.");	    			
+	    		}
+	    	}
+	    	else if(inputCommand.startsWith("put"))//to upload a file on the server
+	    	{
+	    		try
+	    		{
+	    			String[] commands;
+	    			commands=inputCommand.split(" ");//split the command and filename
+	    			FTPmain.ftpputfile(commands[1]);//invoke function with filename
+	    		}
+	    		catch(Exception e)
+	    		{
+	    			
 	    		}
 	    	}
 	    	else
@@ -149,10 +173,22 @@ public class FTPmain //main class for FTP Client
 	    Scanner uName = new Scanner(System.in);
 	    String UN = uName.nextLine();
 
-	    //get password from user
-	    System.out.println("Enter Password: ");
-	    Scanner password = new Scanner(System.in);
-	    String PW = password.nextLine();
+	    Console console = System.console(); //for securely reading password
+	    String PW;
+	    if(console==null)//if no console found then password input is displayed on screen
+	    {
+	    	//get password from user
+	    	System.out.println("WARNING. Console not found, password input is unsecured.");
+	    	System.out.println("Enter Password: ");
+	    	Scanner password = new Scanner(System.in);
+	    	PW = password.nextLine();
+	    }
+	    else//else input is hidden from screen
+	    {
+	    	 char passwordArray[]=null;
+	    	 passwordArray = console.readPassword("Enter password: ");
+	    	 PW=new String(passwordArray);
+	    }
 	    
 	    //get server address from user
 	    System.out.println("Enter server address: ");
@@ -189,6 +225,8 @@ public class FTPmain //main class for FTP Client
 		System.out.println("5. logout: Log out of current session");
 		System.out.println("6. get <<filename>>: Retrieve a file from the server. File must be present at the server.");
 		System.out.println("7. ll: list local files");
+		System.out.println("8. cd <<Directory name>>: Change current remote directory");
+		System.out.println("9. put <<filename>>: Upload a file to the server. File must be present in the current local directory.");
 		System.out.println("End of help text");
 	}
 	
@@ -240,9 +278,33 @@ public class FTPmain //main class for FTP Client
 		return false;
 	}
 	
-    private static  File[] getAllFiles(File curDir) 
+    private static  File[] getAllFiles(File curDir)//function to list local files
     {
-        File[] filesList = curDir.listFiles();
+        File[] filesList = curDir.listFiles();//list the files from current directory
         return filesList;
+    }
+    
+    public static boolean ftpputfile(String filename)//function for uploading file on server
+    {//the file must be present in the current working directory on client machine
+    	try
+    	{
+    		boolean flag;
+    		InputStream input = new FileInputStream(new File(filename));//create an input stream for reading file
+    		flag = client.storeFile(filename, input);//put the file in current working directory on server
+    		if(flag==true)//if upload successful
+    		{
+    			System.out.println("Upload successful!");
+    			return true;
+    		}
+    		else
+    		{
+    			System.out.println("Could not transfer file. Please check file name or connection.");
+    		}
+    	}
+    	catch(Exception e)//if file not found or any other exception
+    	{
+    		System.out.println("Error uploading file. Please check file name or connection");
+    	}
+    	return false;
     }
 }
