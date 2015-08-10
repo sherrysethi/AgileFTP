@@ -1,3 +1,8 @@
+//A simple command line FTP client
+//CS 510 Agile Summer 2015
+//Group Number 7
+//Group Members: Deven B, Abhishek C, Sherry S, Nakul K, Maithily G
+
 //To execute from command line:
 //javac -cp commons-net-3.3.jar FTPmain.java in both Windows and Linux
 //java -cp .;commons-net-3.3.jar FTPmain in Windows
@@ -5,6 +10,8 @@
 
 import java.io.IOException;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.io.BufferedOutputStream;
 import java.io.Console;
 import java.io.FileOutputStream;
@@ -24,11 +31,9 @@ public class FTPmain //main class for FTP Client
 	public static void main(String[] args) 
 	{
 		client = new FTPClient(); //initialize client
-	    //call function which will implement command line interface
-	    FTPmain.ftplooper();
+		System.out.println("Welcome to the Dexters FTP Client! For detailed help, type 'help' and press enter");
+	    FTPmain.ftplooper();//call function which will implement command line interface
 	}
-	
-	
 	
 	public static void ftplooper()//looper function for implementing command line interface
 	{
@@ -97,14 +102,13 @@ public class FTPmain //main class for FTP Client
 	    			System.out.println("Usage: ll"); //to handle unexpected exceptions
 	    		}
 	    	}
-	    	else if(inputCommand.contains("cd"))//to change current remote directory
+	    	else if(inputCommand.startsWith("cd"))//to change current remote directory
 	    	{
 	    		try
 	    		{
 	    			String[] dirName;
 	    			dirName = inputCommand.split(" ");//split according to command and directory name
 	    			boolean success = client.changeWorkingDirectory(dirName[1]);
-	    			//showServerReply(client);
 	    			if (success) 
 	    			{
 	    	                System.out.println("Successfully changed working directory.");
@@ -112,12 +116,12 @@ public class FTPmain //main class for FTP Client
 	    			}
 	    			else 
 	    			{
-	    	                System.out.println("Failed to change working directory.");
+	    	                System.out.println("Failed to change working directory. Check directory name and try again.");
 	    	        }
 	    	 	}
 	    		catch(Exception e)
 	    		{
-	    			System.out.println("Exception in changing working directory.");	    			
+	    			System.out.println("Error. Usage: cd <directoryname>");	    			
 	    		}
 	    	}
 	    	else if(inputCommand.startsWith("put"))//to upload a file on the server
@@ -125,15 +129,112 @@ public class FTPmain //main class for FTP Client
 	    		try
 	    		{
 	    			String[] commands;
+	    			boolean fileupload;
 	    			commands=inputCommand.split(" ");//split the command and filename
-	    			FTPmain.ftpputfile(commands[1]);//invoke function with filename
+	    			fileupload=FTPmain.ftpputfile(commands[1]);//invoke function with filename
+	    			if(fileupload)
+	    			{
+	    				System.out.println("File uploaded successfully");
+	    			}
+	    			else
+	    			{
+	    				System.out.println("Could not upload file.");
+	    			}
 	    		}
 	    		catch(Exception e)
 	    		{
-	    			
+	    			System.out.println("Error. Usage: put <filename>");
 	    		}
 	    	}
-	    	else
+	    	else if(inputCommand.contains("mkdir" )) //Create a new directory
+	    	{
+	    		try
+	    		{
+	    			String[] dirName ;
+	    			dirName = inputCommand.split(" ");//split command and directory name
+	    			System.out.println("\n Are you sure you want to create a new directory: " + dirName[1] + "?\n Press Y or N") ;
+	    			Scanner userInput = new Scanner(System.in);//Read confirmation from user
+	    			String userIn = userInput.nextLine() ;
+	    			if(userIn.toUpperCase().equals("Y"))
+	    			{
+	    				if(FTPmain.IsValidName(dirName[1]))//Check if input is valid directory name
+	    				{
+	    					if(!FTPmain.ftpDirectoryExists(dirName[1]))//Check if directory already exists 
+	    					{
+	    						if(!FTPmain.ftpCreateDirectory(dirName[1]))//Create the directory
+	    						{
+	    							System.out.println("\n ERROR: Directory cannot be created");
+	    						}
+	    					}
+	    					else
+	    					{	//Directory name already exists
+	    						System.out.println("\n ERROR: Directory already exists") ;
+	    					}
+	    				}
+	    				else
+	    				{	//Some special characters appear in directory name
+	    					System.out.println("\n ERROR: Filename contains special characters. Please try again.");
+	    				}
+	    			}
+	    			else 
+	    			{	//User enters N
+	    				System.out.println("\n DIRECTORY CREATION ABORTED");
+	    			}
+	    		}
+	    		catch(Exception e)
+	    		{
+	    			System.out.println("Error. Usage: mkdir <directoryname>");
+	    		}
+	    	}
+	    	else if(inputCommand.equals("pwd"))//To print the current working directory
+	    	{
+	    		FTPmain.ftpPrintCurrentDir();
+	    	}
+	    	else if(inputCommand.startsWith("rmdir"))//To delete a directory on the server
+	    	{
+	    		try
+	    		{
+	    			String[] commands;
+	    			boolean bCheck=false;
+	    			commands=inputCommand.split(" ");//Split the command and filename
+	    			bCheck=FTPmain.ftpdeletedirectory(commands[1]);//Invoke function with filename
+	    			if(bCheck)
+	    			{
+	    				System.out.println("Removed directory");
+	    			}
+	    			else
+	    			{
+	    				System.out.println("Failed to remove directory. Check if directory exists.");
+	    			}
+	    		}
+	    		catch(Exception e)
+	    		{
+	    			System.out.println("Error. Usage: rmdir <directoryname>");
+	    		}
+	    	}
+	    	else if(inputCommand.startsWith("rm"))//To delete a file from the server
+	    	{
+	    		try 
+	    		{
+	    			String[] args;
+	    			args = inputCommand.split(" ");//Split the command and filename
+	    			String fileToDelete = args[1];
+	    		    boolean deleted = client.deleteFile(fileToDelete);//Delete the file and handle response
+	    		    if (deleted) 
+	    		    {
+	    		        System.out.println("The file was deleted successfully.");
+	    		    } 
+	    		    else 
+	    		    {
+	    		        System.out.println("Could not delete the file.");
+	    		    }
+	    		} 
+	    		catch (Exception ex) 
+	    		{
+	    		    System.out.println("Error. Usage: rm <Filename>");
+	    		}
+	    	}
+	    	else//The command is not recognized
 	    	{
 	    		System.out.println("Bad Command");
 	    	}
@@ -145,70 +246,76 @@ public class FTPmain //main class for FTP Client
 	
 	public static boolean ftplogout()//function for logging out of the server
 	{
-		try
-		{
-			if(client.logout()==true)
+			try
 			{
-				System.out.println("Logged out from server");
-				displaystring="ftp>>";
-				return true;
+				if(client.logout()==true)//Log out of the server
+				{
+					System.out.println("Logged out from server");
+					displaystring="ftp>>";
+					return true;
+				}
+				else
+				{
+					System.out.println("Error logging out of server. Could not exit.");
+				}
 			}
-			else
+			catch(IOException e)
 			{
-				System.out.println("Error logging out of server. Could not exit.");
-				
+				System.out.println("ERROR. Not logged in!");
 			}
-		}
-		catch(IOException e)
-		{
-			//e.printStackTrace();
-			System.out.println("ERROR. Not logged in!");
-		}
 		return false;
 	}
+	
 	public static boolean ftplogin()//function for logging in to the server
 	{
-		//get username from user
-	    System.out.println("Enter Username: ");
-	    Scanner uName = new Scanner(System.in);
-	    String UN = uName.nextLine();
-
-	    Console console = System.console(); //for securely reading password
-	    String PW;
-	    if(console==null)//if no console found then password input is displayed on screen
-	    {
-	    	//get password from user
-	    	System.out.println("WARNING. Console not found, password input is unsecured.");
-	    	System.out.println("Enter Password: ");
-	    	Scanner password = new Scanner(System.in);
-	    	PW = password.nextLine();
-	    }
-	    else//else input is hidden from screen
-	    {
-	    	 char passwordArray[]=null;
-	    	 passwordArray = console.readPassword("Enter password: ");
-	    	 PW=new String(passwordArray);
-	    }
-	    
-	    //get server address from user
-	    System.out.println("Enter server address: ");
-	    Scanner serverAdd = new Scanner(System.in);
-	    String serverAddStr = serverAdd.nextLine();
-	    
-	    //check if login successful, handle response from server
-		try
+		if(client.isConnected()==false)
 		{
-			client.connect(serverAddStr, 21); //connect to the address provided by the user 
-			if(client.login(UN, PW))
+			//get username from user
+			System.out.println("Enter Username: ");
+			Scanner uName = new Scanner(System.in);
+			String UN = uName.nextLine();
+
+			Console console = System.console(); //for securely reading password
+			String PW;
+			if(console==null)//if no console found then password input is displayed on screen
 			{
-				System.out.println("Successully logged in to " + serverAddStr);
-				displaystring = "ftp "+UN+"@"+serverAddStr+">>"; //change display string
-				return(true);
+				//get password from user
+				System.out.println("WARNING. Console not found, password input is unsecured.");
+				System.out.println("Enter Password: ");
+				Scanner password = new Scanner(System.in);
+				PW = password.nextLine();
+			}
+			else//else input is hidden from screen
+			{
+				char passwordArray[]=null;
+				passwordArray = console.readPassword("Enter password: ");
+				PW=new String(passwordArray);
+			}
+	    
+			//get server address from user
+			System.out.println("Enter server address: ");
+			Scanner serverAdd = new Scanner(System.in);
+			String serverAddStr = serverAdd.nextLine();
+	    
+			//check if login successful, handle response from server
+			try
+			{
+				client.connect(serverAddStr, 21); //connect to the address provided by the user 
+				if(client.login(UN, PW))
+				{
+					System.out.println("Successully logged in to " + serverAddStr);
+					displaystring = "ftp "+UN+"@"+serverAddStr+">>"; //change display string
+					return(true);
+				}
+			}
+			catch(IOException e)
+			{
+				return false;
 			}
 		}
-		catch(IOException e)
+		else
 		{
-			return false;
+			System.out.println("Already logged in!");
 		}
 		return false;
 	}
@@ -224,9 +331,13 @@ public class FTPmain //main class for FTP Client
 		System.out.println("4. login: Log in to remote server.");
 		System.out.println("5. logout: Log out of current session");
 		System.out.println("6. get <<filename>>: Retrieve a file from the server. File must be present at the server.");
-		System.out.println("7. ll: list local files");
+		System.out.println("7. ll: list local files. Files will be listed from current local working directory");
 		System.out.println("8. cd <<Directory name>>: Change current remote directory");
 		System.out.println("9. put <<filename>>: Upload a file to the server. File must be present in the current local directory.");
+		System.out.println("10. mkdir <<Directory name>>: Create a directory on the remote server.");
+		System.out.println("11. pwd: Print the current remote working directory");
+		System.out.println("12. rm <<Filename>>: Delete the file from the server.");
+		System.out.println("13. rmdir <<Directory name>>: Remove the directory from the server.");
 		System.out.println("End of help text");
 	}
 	
@@ -254,6 +365,7 @@ public class FTPmain //main class for FTP Client
 		}
 		
 	}
+	
 	public static boolean ftpgetfile(String filename) //function for retrieving single file from server
 	{
 		String currentDirectory;
@@ -307,4 +419,120 @@ public class FTPmain //main class for FTP Client
     	}
     	return false;
     }
+    
+    private static boolean ftpCreateDirectory(String pathOfDir) // This method creates a new directory
+	{
+		boolean isCreated = false ;
+		try 
+		{
+			boolean dirCreated = client.makeDirectory(pathOfDir) ;
+			if(dirCreated) 
+			{
+				isCreated = true;
+			}
+			else
+			{
+				isCreated = false;
+			}
+		}
+		catch(Exception exp)
+		{
+			System.out.println("\n PROBLEM CREATING OF DIRECTORY");
+			isCreated = false ;
+		}
+		return isCreated ;
+	}
+    
+    public static boolean ftpDirectoryExists(String checkDir) //This method checks if the dir we want to create already exists
+	{
+		boolean isExists = true;
+		try 
+		{
+			boolean checkDirExists = client.changeWorkingDirectory(checkDir);
+			if(!checkDirExists)
+			{
+				isExists = false ;
+			}
+			else
+			{
+				isExists = true ;
+			}
+		}
+		catch(Exception Ex)
+		{
+			System.out.println("\n ERROR: We have some trouble with existing Directories and new directory creations");
+			isExists = false;
+		}
+		return isExists;
+	}
+    
+    public static boolean IsValidName(String dirName)//To check if entered directory name is valid
+    {
+		boolean isValid = true ;
+		try
+		{
+			// Allow numerals in the dir name
+			Pattern regex = Pattern.compile("[0-9]");
+			Matcher matcher = regex.matcher(dirName);
+			if(matcher.find())
+			{
+				isValid = true;
+			}
+			else
+			{
+				// If there are numerals in the dir name then check for special characters
+				// if special characters found then dir name is inValid
+				Pattern regex2 = Pattern.compile("[$&+,:;=?@#|'<>.-^*/()\"%!]");
+				Matcher matcher2 = regex2.matcher(dirName);
+				if(matcher2.find())
+				{
+					isValid = false;
+				}
+				else
+				{
+					// If there is no special character then dir name is valid
+					isValid = true;
+				}
+			}	
+		}
+		catch(Exception ex)
+		{
+			System.out.println("\n ERROR: We have some trouble validating name of directory");
+			isValid = true ;
+		}
+		return isValid ;
+	}
+    
+    public static void ftpPrintCurrentDir()//Function to print current working directory
+    {
+    	try
+    	{
+    		System.out.println("Current working directory is: " + client.printWorkingDirectory());
+    	}
+    	catch(Exception e)
+    	{
+    		System.out.println("Error printing current directory.");
+    	}
+    }
+    private static boolean ftpdeletedirectory(String commands) //function to list delete remote directory
+	{
+		boolean b = false;
+		try 
+		{
+			b=client.removeDirectory(commands);
+			if(b == true)
+			{
+				System.out.println("Directory Deleted !");
+			}
+			else
+			{
+				System.out.println("Directory doesn't exist !!!");
+			}
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+		return b;
+	}
 }
