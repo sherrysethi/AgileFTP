@@ -4,6 +4,7 @@
 //Group Members: Deven B, Abhishek C, Sherry S, Nakul K, Maithily G
 
 //To execute from command line:
+//set path=C:\Program Files\Java\jdk1.7.0_02\bin
 //javac -cp commons-net-3.3.jar FTPmain.java in both Windows and Linux
 //java -cp .;commons-net-3.3.jar FTPmain in Windows
 //java -cp .:commons-net-3.3.jar FTPmain in Linux
@@ -252,6 +253,7 @@ public class FTPmain //main class for FTP Client
 				{
 					System.out.println("Logged out from server");
 					displaystring="ftp>>";
+					client.disconnect();
 					return true;
 				}
 				else
